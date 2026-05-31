@@ -1,0 +1,7 @@
+allowBuilds:
+  '@itsukichan/baileys': true
+  '@whiskeysockets/baileys': true
+  baileys-mod: true
+  ffmpeg-static: true
+  protobufjs: true
+  sharp: true
