@@ -4,7 +4,6 @@ const fs = require('fs');
 const moment = require('moment-timezone');
 const settings = require('../../settings');
 const { readDatabase } = require('../../utils/funciones');
-const { generateWAMessageFromContent, proto } = require('baileys-duplicated');
 
 let version = '1.0.0';
 try {
@@ -26,6 +25,10 @@ module.exports = {
     category: 'general',
 
     handle: async (sock, from, msg, command, args, sender) => {
+        // require dentro del handle: se carga cuando se ejecuta el comando,
+        // no al inicio del bot (evita conflicto de carga con loadBaileys)
+        const { generateWAMessageFromContent, proto } = require('baileys-duplicated');
+
         try {
             const cmds = [...global.comandos.values()];
             const pushName = msg.pushName || sender.split('@')[0];
@@ -116,7 +119,7 @@ module.exports = {
                 ? fs.readFileSync(thumbPath)
                 : undefined;
 
-            // ── Construir interactiveMessage con nativeFlowMessage ──────────
+            // ── Construir interactiveMessage ────────────────────────────────
             const jid = fixJid(from);
 
             const interactive = proto.Message.InteractiveMessage.create({
@@ -130,7 +133,6 @@ module.exports = {
                 },
                 nativeFlowMessage: {
                     buttons: [
-                        // ⛏️ Minar — dispara el comando como quick reply
                         {
                             name: 'quick_reply',
                             buttonParamsJson: JSON.stringify({
@@ -138,7 +140,6 @@ module.exports = {
                                 id: `${settings.prefix}minar`
                             })
                         },
-                        // 👑 Ver Creador — quick reply
                         {
                             name: 'quick_reply',
                             buttonParamsJson: JSON.stringify({
@@ -146,7 +147,6 @@ module.exports = {
                                 id: `${settings.prefix}creador`
                             })
                         },
-                        // 🌐 Web del bot — CTA URL
                         {
                             name: 'cta_url',
                             buttonParamsJson: JSON.stringify({
@@ -159,7 +159,6 @@ module.exports = {
                 }
             });
 
-            // ── Generar y enviar el mensaje ─────────────────────────────────
             const waMsg = await generateWAMessageFromContent(
                 jid,
                 {
