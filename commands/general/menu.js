@@ -12,11 +12,43 @@ try {
     console.warn('⚠️ package.json no encontrado, usando versión por defecto');
 }
 
-function fixJid(jid) {
+/**
+ * Resuelve un JID al formato @s.whatsapp.net correcto.
+ * Convierte @lid, @g.us (grupos), o cualquier jid raro al formato único
+ * que acepta baileys-duplicated para mensajes interactivos.
+ */
+function resolveJid(jid, msg) {
     if (!jid) return null;
-    if (jid.includes('@')) return jid;
-    if (jid.includes('-')) return `${jid}@g.us`;
-    return `${jid}@s.whatsapp.net`;
+
+    // Grupos los dejamos como están
+    if (jid.endsWith('@g.us')) return jid;
+
+    // Si es un @lid, extraemos el número del mensaje original
+    if (jid.includes('@lid')) {
+        // Intento 1: usar el participant del key si existe y no es @lid
+        const participant = msg?.key?.participant;
+        if (participant && !participant.includes('@lid')) return participant;
+
+        // Intento 2: extraer el número del lid (formato: numero@lid)
+        const numero = jid.split('@')[0];
+        if (numero && /^\d+$/.test(numero)) {
+            return `${numero}@s.whatsapp.net`;
+        }
+
+        console.warn('⚠️ [menu] No se pudo resolver @lid:', jid);
+        return null;
+    }
+
+    // Si ya está correcto
+    if (jid.endsWith('@s.whatsapp.net')) return jid;
+
+    // Fallback: agregar @s.whatsapp.net si es solo un número
+    const numero = jid.split('@')[0];
+    if (numero && /^\d+$/.test(numero)) {
+        return `${numero}@s.whatsapp.net`;
+    }
+
+    return jid;
 }
 
 module.exports = {
@@ -28,6 +60,16 @@ module.exports = {
         try {
             const { generateWAMessageFromContent, proto } = require('baileys-duplicated');
             console.log('📌 [menu] handle ejecutado por:', sender);
+            console.log('📌 [menu] from original:', from);
+
+            // ── Resolver JID correcto ───────────────────────────────────────
+            const jid = resolveJid(from, msg);
+            console.log('📌 [menu] JID resuelto:', jid);
+
+            if (!jid) {
+                console.error('❌ [menu] No se pudo resolver el JID destino.');
+                return;
+            }
 
             const cmds = [...global.comandos.values()];
             const pushName = msg.pushName || sender.split('@')[0];
@@ -99,10 +141,7 @@ module.exports = {
                 ? fs.readFileSync(thumbPath)
                 : undefined;
 
-            const jid = fixJid(from);
-            console.log('📌 [menu] JID destino:', jid);
-
-            // ── Construir interactiveMessage con nativeFlowMessage ──────────
+            // ── Construir interactiveMessage ────────────────────────────────
             const interactive = proto.Message.InteractiveMessage.create({
                 body:   { text: menu },
                 footer: { text: `☘️ ${settings.botName} v${version}` },
@@ -160,7 +199,7 @@ module.exports = {
 
             console.log('📌 [menu] Enviando relayMessage...');
             await sock.relayMessage(jid, waMsg.message, { messageId: waMsg.key.id });
-            console.log('✅ [menu] Menú enviado correctamente.');
+            console.log('✅ [menu] Menú enviado correctamente a:', jid);
 
         } catch (err) {
             console.error('❌ ERROR EN MENÚ:', err);
