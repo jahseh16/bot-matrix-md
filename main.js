@@ -6,25 +6,27 @@ const qrcode = require('qrcode-terminal');
 const settings = require('./settings');
 const { readDatabase, writeDatabase } = require('./utils/funciones');
 
-// Variables de Baileys — se cargan una sola vez vía loadBaileys()
+// Variables de Baileys — apuntan a wileys via alias npm
 let makeWASocket,
     useMultiFileAuthState,
     DisconnectReason,
     fetchLatestBaileysVersion,
+    makeInMemoryStore,
     jidDecode;
 
 async function loadBaileys() {
-    const baileys = require('baileys-duplicated');
+    const baileys = require('@whiskeysockets/baileys');
 
     ({
         makeWASocket,
         useMultiFileAuthState,
         DisconnectReason,
         fetchLatestBaileysVersion,
+        makeInMemoryStore,
         jidDecode
     } = baileys);
 
-    // Validar solo los exports que realmente existen en baileys-duplicated
+    // Validar exports críticos
     const required = {
         makeWASocket,
         useMultiFileAuthState,
@@ -36,12 +38,12 @@ async function loadBaileys() {
     for (const [name, fn] of Object.entries(required)) {
         if (typeof fn === 'undefined') {
             throw new Error(
-                `[loadBaileys] ERROR: "${name}" no fue encontrado en baileys-duplicated.`
+                `[loadBaileys] ERROR: "${name}" no fue encontrado en wileys (@whiskeysockets/baileys alias).`
             );
         }
     }
 
-    console.log('✅ baileys-duplicated cargado correctamente.');
+    console.log('✅ wileys cargado correctamente via alias @whiskeysockets/baileys.');
 }
 
 const decodeJid = (jid) => {
@@ -58,10 +60,14 @@ const decodeJid = (jid) => {
 async function connectToWhatsApp() {
     await loadBaileys();
 
+    const store = typeof makeInMemoryStore === 'function'
+        ? makeInMemoryStore({ logger: pino({ level: 'silent' }).child({ stream: 'store' }) })
+        : null;
+
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
     const { version } = await fetchLatestBaileysVersion();
 
-    console.log(`🔧 Usando Baileys versión: ${version.join('.')}`);
+    console.log(`🔧 Usando wileys versión: ${version.join('.')}`);
 
     const sock = makeWASocket({
         version,
@@ -70,6 +76,8 @@ async function connectToWhatsApp() {
         auth: state,
         browser: [settings.botName, 'Chrome', '1.0.0']
     });
+
+    if (store) store.bind(sock.ev);
 
     sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect, qr } = update;

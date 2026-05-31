@@ -13,41 +13,26 @@ try {
 }
 
 /**
- * Resuelve un JID al formato @s.whatsapp.net correcto.
- * Convierte @lid, @g.us (grupos), o cualquier jid raro al formato único
- * que acepta baileys-duplicated para mensajes interactivos.
+ * Resuelve JID @lid -> @s.whatsapp.net
+ * wileys necesita siempre el formato @s.whatsapp.net para mensajes interactivos
  */
 function resolveJid(jid, msg) {
     if (!jid) return null;
-
-    // Grupos los dejamos como están
     if (jid.endsWith('@g.us')) return jid;
 
-    // Si es un @lid, extraemos el número del mensaje original
     if (jid.includes('@lid')) {
-        // Intento 1: usar el participant del key si existe y no es @lid
         const participant = msg?.key?.participant;
         if (participant && !participant.includes('@lid')) return participant;
-
-        // Intento 2: extraer el número del lid (formato: numero@lid)
         const numero = jid.split('@')[0];
-        if (numero && /^\d+$/.test(numero)) {
-            return `${numero}@s.whatsapp.net`;
-        }
-
+        if (numero && /^\d+$/.test(numero)) return `${numero}@s.whatsapp.net`;
         console.warn('⚠️ [menu] No se pudo resolver @lid:', jid);
         return null;
     }
 
-    // Si ya está correcto
     if (jid.endsWith('@s.whatsapp.net')) return jid;
 
-    // Fallback: agregar @s.whatsapp.net si es solo un número
     const numero = jid.split('@')[0];
-    if (numero && /^\d+$/.test(numero)) {
-        return `${numero}@s.whatsapp.net`;
-    }
-
+    if (numero && /^\d+$/.test(numero)) return `${numero}@s.whatsapp.net`;
     return jid;
 }
 
@@ -58,11 +43,10 @@ module.exports = {
 
     handle: async (sock, from, msg, command, args, sender) => {
         try {
-            const { generateWAMessageFromContent, proto } = require('baileys-duplicated');
-            console.log('📌 [menu] handle ejecutado por:', sender);
+            const { generateWAMessageFromContent, proto } = require('@whiskeysockets/baileys');
+            console.log('📌 [menu] ejecutado por:', sender);
             console.log('📌 [menu] from original:', from);
 
-            // ── Resolver JID correcto ───────────────────────────────────────
             const jid = resolveJid(from, msg);
             console.log('📌 [menu] JID resuelto:', jid);
 
@@ -82,7 +66,7 @@ module.exports = {
                 hora < '19:00:00' ? 'Buenas tardes' :
                 'Buenas noches';
 
-            // ── Stats del usuario ───────────────────────────────────────────
+            // Stats del usuario
             const statsData = readDatabase('stats.json');
             const userStats = statsData[sender] || { xp: 0, level: 1, diamantes: 0 };
             const xpActual   = userStats.xp        || 0;
@@ -95,7 +79,7 @@ module.exports = {
                 ? usuarios.length
                 : Object.keys(usuarios).length;
 
-            // ── Agrupar comandos por categoría ──────────────────────────────
+            // Agrupar comandos por categoría
             const categories = {};
             cmds.forEach((cmd) => {
                 if (!cmd.command) return;
@@ -106,14 +90,14 @@ module.exports = {
                 }
             });
 
-            // ── Texto del menú ──────────────────────────────────────────────
+            // Texto del menú
             let menu = `╭──❮ 🌟 *${settings.botName}* 🌟 ❯──╮\n`;
             menu += `│\n`;
             menu += `│  ${ucapan}, *${pushName}*\n`;
             menu += `│\n`;
             menu += `│  👑 Owner      : JAHSEH\n`;
             menu += `│  ⚙️ *Versión*: v${version}\n`;
-            menu += `│  🧠 *Motor*: Baileys-MD\n`;
+            menu += `│  🧠 *Motor*: wileys\n`;
             menu += `│\n`;
             menu += `│  🧍 *Nivel*: ${nivel}\n`;
             menu += `│  ⚡ *EXP*: ${xpActual}/${xpSiguiente}\n`;
@@ -135,13 +119,13 @@ module.exports = {
             }
             menu += `╚═══════════✡═══════════╝`;
 
-            // ── Thumbnail opcional ──────────────────────────────────────────
+            // Thumbnail opcional
             const thumbPath = './media/thumb.jpg';
             const thumbBuffer = fs.existsSync(thumbPath)
                 ? fs.readFileSync(thumbPath)
                 : undefined;
 
-            // ── Construir interactiveMessage ────────────────────────────────
+            // Construir interactiveMessage con nativeFlowMessage (wileys)
             const interactive = proto.Message.InteractiveMessage.create({
                 body:   { text: menu },
                 footer: { text: `☘️ ${settings.botName} v${version}` },
@@ -156,21 +140,21 @@ module.exports = {
                         {
                             name: 'quick_reply',
                             buttonParamsJson: JSON.stringify({
-                                display_text: '⛏️ Minar',
+                                display_text: '[ 1 ] ⛏️ Minar',
                                 id: `${settings.prefix}minar`
                             })
                         },
                         {
                             name: 'quick_reply',
                             buttonParamsJson: JSON.stringify({
-                                display_text: '👑 Ver Creador',
+                                display_text: '[ 2 ] 👑 Ver Creador',
                                 id: `${settings.prefix}creador`
                             })
                         },
                         {
                             name: 'cta_url',
                             buttonParamsJson: JSON.stringify({
-                                display_text: '🌐 Visitar Web',
+                                display_text: '[ 3 ] 🌐 Sitio Web',
                                 url: 'https://devmatrixs.lat',
                                 merchant_url: 'https://devmatrixs.lat'
                             })
