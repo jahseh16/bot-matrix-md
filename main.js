@@ -15,11 +15,10 @@ let makeWASocket,
     jidDecode;
 
 async function loadBaileys() {
-    // En v6, el entry point del paquete expone todos los exports correctamente.
-    // NO apuntes a lib/index.js — eso acopla el código a la estructura interna.
-    const baileys = require('@whiskeysockets/baileys');
+    // baileys-duplicated es drop-in replacement de @whiskeysockets/baileys
+    // y tiene soporte completo para todos los botones interactivos modernos
+    const baileys = require('baileys-duplicated');
 
-    // Destructuring explícito: si algún export no existe, lo sabrás de inmediato
     ({
         makeWASocket,
         useMultiFileAuthState,
@@ -29,7 +28,7 @@ async function loadBaileys() {
         jidDecode
     } = baileys);
 
-    // Validación en tiempo de carga — detecta el problema antes de usarlos
+    // Validación en tiempo de carga — detecta si algún export falta
     const required = {
         makeWASocket,
         useMultiFileAuthState,
@@ -42,13 +41,13 @@ async function loadBaileys() {
     for (const [name, fn] of Object.entries(required)) {
         if (typeof fn === 'undefined') {
             throw new Error(
-                `[loadBaileys] ERROR: "${name}" no fue encontrado en @whiskeysockets/baileys. ` +
-                `Verifica que tienes instalada la versión 6.x (pnpm add @whiskeysockets/baileys@6.7.16)`
+                `[loadBaileys] ERROR: "${name}" no fue encontrado en baileys-duplicated. ` +
+                `Verifica que instalaste: pnpm add baileys-duplicated`
             );
         }
     }
 
-    console.log('✅ Baileys cargado correctamente.');
+    console.log('✅ baileys-duplicated cargado correctamente.');
 }
 
 const decodeJid = (jid) => {
@@ -63,10 +62,8 @@ const decodeJid = (jid) => {
 };
 
 async function connectToWhatsApp() {
-    // Carga y valida Baileys antes de usarlo
     await loadBaileys();
 
-    // makeInMemoryStore ahora está garantizado como función
     const store = makeInMemoryStore({
         logger: pino({ level: 'silent' }).child({ stream: 'store' })
     });
