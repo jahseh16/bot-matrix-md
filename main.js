@@ -11,12 +11,9 @@ let makeWASocket,
     useMultiFileAuthState,
     DisconnectReason,
     fetchLatestBaileysVersion,
-    makeInMemoryStore,
     jidDecode;
 
 async function loadBaileys() {
-    // baileys-duplicated es drop-in replacement de @whiskeysockets/baileys
-    // y tiene soporte completo para todos los botones interactivos modernos
     const baileys = require('baileys-duplicated');
 
     ({
@@ -24,25 +21,22 @@ async function loadBaileys() {
         useMultiFileAuthState,
         DisconnectReason,
         fetchLatestBaileysVersion,
-        makeInMemoryStore,
         jidDecode
     } = baileys);
 
-    // Validación en tiempo de carga — detecta si algún export falta
+    // Validar solo los exports que realmente existen en baileys-duplicated
     const required = {
         makeWASocket,
         useMultiFileAuthState,
         DisconnectReason,
         fetchLatestBaileysVersion,
-        makeInMemoryStore,
         jidDecode
     };
 
     for (const [name, fn] of Object.entries(required)) {
         if (typeof fn === 'undefined') {
             throw new Error(
-                `[loadBaileys] ERROR: "${name}" no fue encontrado en baileys-duplicated. ` +
-                `Verifica que instalaste: pnpm add baileys-duplicated`
+                `[loadBaileys] ERROR: "${name}" no fue encontrado en baileys-duplicated.`
             );
         }
     }
@@ -64,10 +58,6 @@ const decodeJid = (jid) => {
 async function connectToWhatsApp() {
     await loadBaileys();
 
-    const store = makeInMemoryStore({
-        logger: pino({ level: 'silent' }).child({ stream: 'store' })
-    });
-
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
     const { version } = await fetchLatestBaileysVersion();
 
@@ -80,8 +70,6 @@ async function connectToWhatsApp() {
         auth: state,
         browser: [settings.botName, 'Chrome', '1.0.0']
     });
-
-    store.bind(sock.ev);
 
     sock.ev.on('connection.update', (update) => {
         const { connection, lastDisconnect, qr } = update;

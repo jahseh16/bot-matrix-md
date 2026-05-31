@@ -25,11 +25,10 @@ module.exports = {
     category: 'general',
 
     handle: async (sock, from, msg, command, args, sender) => {
-        // require dentro del handle: se carga cuando se ejecuta el comando,
-        // no al inicio del bot (evita conflicto de carga con loadBaileys)
-        const { generateWAMessageFromContent, proto } = require('baileys-duplicated');
-
         try {
+            const { generateWAMessageFromContent, proto } = require('baileys-duplicated');
+            console.log('📌 [menu] handle ejecutado por:', sender);
+
             const cmds = [...global.comandos.values()];
             const pushName = msg.pushName || sender.split('@')[0];
 
@@ -41,25 +40,6 @@ module.exports = {
                 hora < '19:00:00' ? 'Buenas tardes' :
                 'Buenas noches';
 
-            // ── Contacto falso verificado (quoted) ──────────────────────────
-            const fkontak = {
-                key: { fromMe: false, participant: '0@s.whatsapp.net' },
-                message: {
-                    contactMessage: {
-                        displayName: `✅ ${settings.botName}`,
-                        vcard: [
-                            'BEGIN:VCARD',
-                            'VERSION:3.0',
-                            `N:;${settings.botName};;;`,
-                            `FN:${settings.botName}`,
-                            `item1.TEL;waid=${settings.ownerNumbers[0]}:+${settings.ownerNumbers[0]}`,
-                            'item1.X-ABLabel:Teléfono',
-                            'END:VCARD'
-                        ].join('\n')
-                    }
-                }
-            };
-
             // ── Stats del usuario ───────────────────────────────────────────
             const statsData = readDatabase('stats.json');
             const userStats = statsData[sender] || { xp: 0, level: 1, diamantes: 0 };
@@ -68,7 +48,7 @@ module.exports = {
             const diamantes   = userStats.diamantes || 0;
             const xpSiguiente = nivel * 150;
 
-            const usuarios    = readDatabase('usuarios.json');
+            const usuarios = readDatabase('usuarios.json');
             const totalUsuarios = Array.isArray(usuarios)
                 ? usuarios.length
                 : Object.keys(usuarios).length;
@@ -119,9 +99,10 @@ module.exports = {
                 ? fs.readFileSync(thumbPath)
                 : undefined;
 
-            // ── Construir interactiveMessage ────────────────────────────────
             const jid = fixJid(from);
+            console.log('📌 [menu] JID destino:', jid);
 
+            // ── Construir interactiveMessage con nativeFlowMessage ──────────
             const interactive = proto.Message.InteractiveMessage.create({
                 body:   { text: menu },
                 footer: { text: `☘️ ${settings.botName} v${version}` },
@@ -159,6 +140,8 @@ module.exports = {
                 }
             });
 
+            console.log('📌 [menu] Generando waMsg...');
+
             const waMsg = await generateWAMessageFromContent(
                 jid,
                 {
@@ -172,16 +155,22 @@ module.exports = {
                         }
                     }
                 },
-                { userJid: sock.user.id, quoted: fkontak }
+                { userJid: sock.user.id }
             );
 
+            console.log('📌 [menu] Enviando relayMessage...');
             await sock.relayMessage(jid, waMsg.message, { messageId: waMsg.key.id });
+            console.log('✅ [menu] Menú enviado correctamente.');
 
         } catch (err) {
-            console.error('❌ Error en comando menú:', err);
-            await sock.sendMessage(from, {
-                text: `❌ Error ejecutando el comando menú.\n\n${err.message || err}`
-            });
+            console.error('❌ ERROR EN MENÚ:', err);
+            try {
+                await sock.sendMessage(from, {
+                    text: `❌ Error en menú:\n\n${err.message || err}`
+                });
+            } catch (e) {
+                console.error('❌ Tampoco pudo enviar el error:', e.message);
+            }
         }
     }
 };
