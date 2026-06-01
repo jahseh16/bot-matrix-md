@@ -69,7 +69,7 @@ module.exports = {
                                     'Buenas noches';
 
             // Stats del usuario
-            const statsData = readDatabase('stats.json');
+            const statsData  = readDatabase('stats.json');
             const userStats  = statsData[sender] || { xp: 0, level: 1, diamantes: 0 };
             const xpActual   = userStats.xp        || 0;
             const nivel       = userStats.level     || 1;
@@ -109,18 +109,19 @@ module.exports = {
                 const catName = cat.toUpperCase();
                 const emoji   = catEmoji[cat] || '📂';
                 menu += `│\n`;
-                menu += `> ${emoji} *[ ${catName} ]*\n`;
+                // ── PREFIJO en el título de la categoría ──────────────────────
+                menu += `> ${emoji} *[ ${usedPrefix}${catName} ]*\n`;
                 cmdsArr.forEach((cmd) => {
-                    menu += `> _${cmd.command[0]}_\n`;
+                    menu += `> _${usedPrefix}${cmd.command[0]}_\n`;
                 });
             }
             menu += `│\n`;
             menu += `└───────────────────────┘\n`;
             menu += `🌐 devmatrixs.lat — El control.`;
 
-            // ── Envío: imagen de ImgBB + caption + buttons nativos ────────────
+            // ── Envío: imagen + caption + buttons (quick_reply + urlButton) ───
             await sock.sendMessage(jid, {
-                image: { url: 'https://i.ibb.co/gLVNPHj8/922335a4-dc29-4e06-bd92-5d34bc9548de.jpg' },
+                image:    { url: 'https://i.ibb.co/gLVNPHj8/922335a4-dc29-4e06-bd92-5d34bc9548de.jpg' },
                 caption:  menu,
                 footer:   `🌐 devmatrixs.lat — El control.`,
                 mimetype: 'image/jpeg',
@@ -136,12 +137,21 @@ module.exports = {
                         type: 1
                     },
                     {
-                        buttonId:   `${usedPrefix}web`,
+                        // urlButton: abre el navegador directamente al pulsarlo
+                        buttonId:   'url_web',
                         buttonText: { displayText: '🌐 Sitio Web' },
-                        type: 1
+                        type: 1,
+                        nativeFlowInfo: {
+                            name: 'cta_url',
+                            paramsJson: JSON.stringify({
+                                display_text: '🌐 Sitio Web',
+                                url: 'https://devmatrixs.lat',
+                                merchant_url: 'https://devmatrixs.lat'
+                            })
+                        }
                     }
                 ],
-                headerType: 4  // DOCUMENT_WITH_CAPTION → imagen con botones
+                headerType: 4
             });
 
             console.log('✅ [menu] Menú enviado correctamente a:', jid);
