@@ -68,7 +68,6 @@ module.exports = {
                 hora < '19:00:00' ? 'Buenas tardes' :
                                     'Buenas noches';
 
-            // Stats del usuario
             const statsData  = readDatabase('stats.json');
             const userStats  = statsData[sender] || { xp: 0, level: 1, diamantes: 0 };
             const xpActual   = userStats.xp        || 0;
@@ -76,7 +75,7 @@ module.exports = {
             const diamantes   = userStats.diamantes || 0;
             const xpSiguiente = nivel * 150;
 
-            // ── Agrupar comandos dinámicamente desde global.comandos ──────────
+            // ── Comandos dinámicos ──────────────────────────────────────────
             const cmds = [...global.comandos.values()];
             const categories = {};
             cmds.forEach((cmd) => {
@@ -88,10 +87,10 @@ module.exports = {
                 }
             });
 
-            // ── Construir texto del menú ──────────────────────────────────────
-            let menu = `╔═══════════════════╗\n`;
+            // ── Texto del menú ─────────────────────────────────────────────
+            let menu = `╔════════════════════════╗\n`;
             menu += `  🤖 𝗠𝗔𝗧𝗥𝗜𝗫 𝗕𝗢𝗧 — v${version}\n`;
-            menu += `╚═══════════════════╝\n`;
+            menu += `╚════════════════════════╝\n`;
             menu += `\n📌 ¡${ucapan}, ${pushName}! \n`;
 
             menu += `\n┌── 📊 𝗘𝗦𝗧𝗔𝗗𝗜́𝗦𝗧𝗜𝗖𝗔𝗦 ──┐\n`;
@@ -102,14 +101,13 @@ module.exports = {
             menu += `│ \`\`\`Nivel    : ${nivel}\`\`\`\n`;
             menu += `│ \`\`\`EXP      : ${xpActual} / ${xpSiguiente}\`\`\`\n`;
             menu += `│ \`\`\`Diamantes: ${diamantes}\`\`\`\n`;
-            menu += `└────────────────────┘\n`;
+            menu += `└───────────────────────┘\n`;
 
             menu += `\n┌── 📁 𝗠𝗘𝗡𝗨́ 𝗖𝗢𝗠𝗔𝗡𝗗𝗢𝗦 ──┐\n`;
             for (const [cat, cmdsArr] of Object.entries(categories)) {
                 const catName = cat.toUpperCase();
                 const emoji   = catEmoji[cat] || '📂';
                 menu += `│\n`;
-                // ── PREFIJO en el título de la categoría ──────────────────────
                 menu += `> ${emoji} *[ ${usedPrefix}${catName} ]*\n`;
                 cmdsArr.forEach((cmd) => {
                     menu += `> _${usedPrefix}${cmd.command[0]}_\n`;
@@ -119,7 +117,9 @@ module.exports = {
             menu += `└───────────────────────┘\n`;
             menu += `🌐 devmatrixs.lat — El control.`;
 
-            // ── Envío: imagen + caption + buttons (quick_reply + urlButton) ───
+            // ── Envío con botones mixtos ───────────────────────────────────
+            // type:1 = quick_reply (flechita ↩️)
+            // type:5 = urlButton   (cuadrito ↗️, abre Chrome directamente)
             await sock.sendMessage(jid, {
                 image:    { url: 'https://i.ibb.co/gLVNPHj8/922335a4-dc29-4e06-bd92-5d34bc9548de.jpg' },
                 caption:  menu,
@@ -137,18 +137,10 @@ module.exports = {
                         type: 1
                     },
                     {
-                        // urlButton: abre el navegador directamente al pulsarlo
-                        buttonId:   'url_web',
+                        buttonId:   'url_devmatrix',
                         buttonText: { displayText: '🌐 Sitio Web' },
-                        type: 1,
-                        nativeFlowInfo: {
-                            name: 'cta_url',
-                            paramsJson: JSON.stringify({
-                                display_text: '🌐 Sitio Web',
-                                url: 'https://devmatrixs.lat',
-                                merchant_url: 'https://devmatrixs.lat'
-                            })
-                        }
+                        type: 5,
+                        url: 'https://devmatrixs.lat'
                     }
                 ],
                 headerType: 4
