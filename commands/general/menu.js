@@ -75,7 +75,7 @@ module.exports = {
             const diamantes   = userStats.diamantes || 0;
             const xpSiguiente = nivel * 150;
 
-            // ── Comandos dinámicos ──────────────────────────────────────────
+            // ── Comandos dinámicos ──────────────────────────────────────────────
             const cmds = [...global.comandos.values()];
             const categories = {};
             cmds.forEach((cmd) => {
@@ -87,10 +87,10 @@ module.exports = {
                 }
             });
 
-            // ── Texto del menú ─────────────────────────────────────────────
-            let menu = `╔════════════════════╗\n`;
+            // ── Texto del menú ──────────────────────────────────────────────────
+            let menu = `╔════════════════════════╗\n`;
             menu += `  🤖 𝗠𝗔𝗧𝗥𝗜𝗫 𝗕𝗢𝗧 — v${version}\n`;
-            menu += `╚════════════════════╝\n`;
+            menu += `╚════════════════════════╝\n`;
             menu += `\n📌 ¡${ucapan}, ${pushName}! \n`;
 
             menu += `\n┌── 📊 𝗘𝗦𝗧𝗔𝗗𝗜́𝗦𝗧𝗜𝗖𝗔𝗦 ──┐\n`;
@@ -101,7 +101,7 @@ module.exports = {
             menu += `│ \`\`\`Nivel    : ${nivel}\`\`\`\n`;
             menu += `│ \`\`\`EXP      : ${xpActual} / ${xpSiguiente}\`\`\`\n`;
             menu += `│ \`\`\`Diamantes: ${diamantes}\`\`\`\n`;
-            menu += `└───────────────────┘\n`;
+            menu += `└───────────────────────┘\n`;
 
             menu += `\n┌── 📁 𝗠𝗘𝗡𝗨́ 𝗖𝗢𝗠𝗔𝗡𝗗𝗢𝗦 ──┐\n`;
             for (const [cat, cmdsArr] of Object.entries(categories)) {
@@ -114,12 +114,10 @@ module.exports = {
                 });
             }
             menu += `│\n`;
-            menu += `└────────────────────┘\n`;
+            menu += `└───────────────────────┘\n`;
             menu += `🌐 devmatrixs.lat — El control.`;
 
-            // ── templateButtons: estructura que genera ↩️ y ↗️ en WhatsApp ────────
-            // quickReplyButton -> ↩️ (envía el id como texto al chat)
-            // urlButton        -> ↗️ (abre Chrome al tocarlo)
+            // ── templateButtons: 100% texto para evitar bloqueos de Meta ────────
             await sock.sendMessage(jid, {
                 image:    { url: 'https://i.ibb.co/gLVNPHj8/922335a4-dc29-4e06-bd92-5d34bc9548de.jpg' },
                 caption:  menu,
@@ -142,9 +140,9 @@ module.exports = {
                     },
                     {
                         index: 3,
-                        urlButton: {
+                        quickReplyButton: {
                             displayText: '🌐 Sitio Web',
-                            url: 'https://devmatrixs.lat'
+                            id: `${usedPrefix}web`
                         }
                     }
                 ]
