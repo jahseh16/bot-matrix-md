@@ -28,6 +28,20 @@ function resolveJid(jid, msg) {
     return jid;
 }
 
+// Emoji por categoria para el menu dinamico
+const catEmoji = {
+    'ia':          '🧠',
+    'system':      '⚡',
+    'buscador':    '🔍',
+    'downloader':  '📥',
+    'general':     '⚙️',
+    'juegos':      '🎮',
+    'economia':    '💰',
+    'moderacion':  '🛡️',
+    'grupo':       '👥',
+    'multimedia':  '🎥',
+};
+
 module.exports = {
     command: ['menu', 'help', 'ayuda'],
     description: 'Muestra los comandos del bot',
@@ -63,11 +77,26 @@ module.exports = {
             const diamantes   = userStats.diamantes || 0;
             const xpSiguiente = nivel * 150;
 
-            // Texto del menú (diseño exacto solicitado)
+            // ── Agrupar comandos dinámicamente desde global.comandos ──────────
+            const cmds = [...global.comandos.values()];
+            const categories = {};
+            cmds.forEach((cmd) => {
+                if (!cmd.command) return;
+                const cat = (cmd.category || 'general').toLowerCase();
+                if (!categories[cat]) categories[cat] = [];
+                // evitar duplicados
+                if (!categories[cat].some((c) => c.command[0] === cmd.command[0])) {
+                    categories[cat].push(cmd);
+                }
+            });
+
+            // ── Cabecera fija ────────────────────────────────────────────────
             let menu = `╔════════════════════════╗\n`;
             menu += `  🤖 𝗔𝗔𝗧𝗥𝗜𝗫 𝗕𝗢𝗧 — v${version}\n`;
             menu += `╚════════════════════════╝\n`;
             menu += `\n📌 ¡${ucapan}, ${pushName}! \n`;
+
+            // ── Bloque de estadísticas con backticks ────────────────────────
             menu += `\n┌── 📊 𝗘𝗦𝗧𝗔𝗗𝗜́𝗦𝗧𝗜𝗖𝗔𝗦 ──┐\n`;
             menu += `│ \`\`\`Creador: JAHSEH\`\`\`\n`;
             menu += `│ \`\`\`Motor  : wileys\`\`\`\n`;
@@ -77,31 +106,29 @@ module.exports = {
             menu += `│ \`\`\`EXP      : ${xpActual} / ${xpSiguiente}\`\`\`\n`;
             menu += `│ \`\`\`Diamantes: ${diamantes}\`\`\`\n`;
             menu += `└───────────────────────┘\n`;
+
+            // ── Sección de comandos dinámicos ────────────────────────────────
             menu += `\n┌── 📁 𝗔𝗘𝗡𝗞́ 𝗖𝗢𝗔𝗔𝗕𝗢𝗦 ──┐\n`;
+
+            for (const [cat, cmdsArr] of Object.entries(categories)) {
+                const catName = cat.charAt(0).toUpperCase() + cat.slice(1);
+                const emoji = catEmoji[cat] || '📂';
+                menu += `│\n`;
+                menu += `> ${emoji} *[ ${catName.toUpperCase()} ]*\n`;
+                cmdsArr.forEach((cmd) => {
+                    // mostrar solo el primer alias del comando
+                    const nombre = cmd.command[0];
+                    // si el comando tiene descripción corta la incluimos
+                    const desc = cmd.description ? `: ${cmd.description}` : '';
+                    menu += `> _${nombre}_${desc}\n`;
+                });
+            }
+
             menu += `│\n`;
-            menu += `> 🧠 *[ IA ]*\n`;
-            menu += `> _ia_: texto\n`;
-            menu += `> _hd_: imagen\n`;
-            menu += `> _imagine_: texto\n`;
-            menu += `│\n`;
-            menu += `> ⚡ *[ SYSTEM ]*\n`;
-            menu += `> _lisa_\n`;
-            menu += `│\n`;
-            menu += `> 🔍 *[ BUSCADOR ]*\n`;
-            menu += `> _grupos_\n`;
-            menu += `│\n`;
-            menu += `> 📥 *[ DOWNLOADER ]*\n`;
-            menu += `> _dl_: enlace\n`;
-            menu += `> _tiktok_: ejemplo\n`;
-            menu += `> _ttimg_: enlace\n`;
-            menu += `> _yt_: enlace/texto\n`;
-            menu += `│\n`;
-            menu += `> ⚙️ *[ GENERAL ]*\n`;
-            menu += `> _menu_\n`;
             menu += `└───────────────────────┘\n`;
             menu += `🌐 devmatrixs.lat — El control.`;
 
-            // Tarjeta de contacto verificado
+            // ── Tarjeta de contacto verificado ───────────────────────────────
             const fkontak = {
                 key: { fromMe: false, participant: '0@s.whatsapp.net' },
                 message: {
@@ -120,7 +147,7 @@ module.exports = {
                 }
             };
 
-            // Construir interactiveMessage con imagen de cabecera
+            // ── Construir interactiveMessage ─────────────────────────────────
             const interactive = proto.Message.InteractiveMessage.create({
                 body:   { text: menu },
                 footer: { text: `🌐 devmatrixs.lat — El control.` },
@@ -129,9 +156,9 @@ module.exports = {
                     subtitle:           `${ucapan}, ${pushName}`,
                     hasMediaAttachment: true,
                     imageMessage: proto.Message.ImageMessage.create({
-                        url: 'https://i.ibb.co/gLVNPHj8/922335a4-dc29-4e06-bd92-5d34bc9548de.jpg',
-                        mimetype: 'image/jpeg',
-                        caption: '',
+                        url:           'https://i.ibb.co/gLVNPHj8/922335a4-dc29-4e06-bd92-5d34bc9548de.jpg',
+                        mimetype:      'image/jpeg',
+                        caption:       '',
                         jpegThumbnail: Buffer.alloc(0)
                     })
                 },
