@@ -28,7 +28,6 @@ function resolveJid(jid, msg) {
     return jid;
 }
 
-// Emoji por categoria
 const catEmoji = {
     'ia':         '🧠',
     'system':     '⚡',
@@ -49,7 +48,6 @@ module.exports = {
 
     handle: async (sock, from, msg, command, args, sender) => {
         try {
-            const { generateWAMessageFromContent, proto } = require('@whiskeysockets/baileys');
             console.log('📌 [menu] ejecutado por:', sender);
 
             const jid = resolveJid(from, msg);
@@ -59,7 +57,8 @@ module.exports = {
                 return;
             }
 
-            const pushName = msg.pushName || sender.split('@')[0];
+            const usedPrefix = settings.prefix || '.';
+            const pushName   = msg.pushName || sender.split('@')[0];
 
             const hora = moment.tz('America/Lima').format('HH:mm:ss');
             const ucapan =
@@ -71,13 +70,13 @@ module.exports = {
 
             // Stats del usuario
             const statsData = readDatabase('stats.json');
-            const userStats = statsData[sender] || { xp: 0, level: 1, diamantes: 0 };
+            const userStats  = statsData[sender] || { xp: 0, level: 1, diamantes: 0 };
             const xpActual   = userStats.xp        || 0;
             const nivel       = userStats.level     || 1;
             const diamantes   = userStats.diamantes || 0;
             const xpSiguiente = nivel * 150;
 
-            // ── Agrupar comandos dinámicamente desde global.comandos ──────
+            // ── Agrupar comandos dinámicamente desde global.comandos ──────────
             const cmds = [...global.comandos.values()];
             const categories = {};
             cmds.forEach((cmd) => {
@@ -89,13 +88,12 @@ module.exports = {
                 }
             });
 
-            // ── Construir texto del menú ────────────────────────────
+            // ── Construir texto del menú ──────────────────────────────────────
             let menu = `╔════════════════════════╗\n`;
-            menu += `  🤖 𝗔𝗔𝗧𝗥𝗜𝗫 𝗕𝗢𝗧 — v${version}\n`;
+            menu += `  🤖 𝗠𝗔𝗧𝗥𝗜𝗫 𝗕𝗢𝗧 — v${version}\n`;
             menu += `╚════════════════════════╝\n`;
             menu += `\n📌 ¡${ucapan}, ${pushName}! \n`;
 
-            // Bloque de estadísticas (backticks renderizados por WhatsApp como monospace)
             menu += `\n┌── 📊 𝗘𝗦𝗧𝗔𝗗𝗜́𝗦𝗧𝗜𝗖𝗔𝗦 ──┐\n`;
             menu += `│ \`\`\`Creador: JAHSEH\`\`\`\n`;
             menu += `│ \`\`\`Motor  : wileys\`\`\`\n`;
@@ -106,8 +104,7 @@ module.exports = {
             menu += `│ \`\`\`Diamantes: ${diamantes}\`\`\`\n`;
             menu += `└───────────────────────┘\n`;
 
-            // Bloque de comandos dinámicos
-            menu += `\n┌── 📁 𝗔𝗘𝗡𝗞́ 𝗖𝗢𝗔𝗔𝗕𝗢𝗦 ──┐\n`;
+            menu += `\n┌── 📁 𝗠𝗘𝗡𝗨́ 𝗖𝗢𝗠𝗔𝗡𝗗𝗢𝗦 ──┐\n`;
             for (const [cat, cmdsArr] of Object.entries(categories)) {
                 const catName = cat.toUpperCase();
                 const emoji   = catEmoji[cat] || '📂';
@@ -121,59 +118,33 @@ module.exports = {
             menu += `└───────────────────────┘\n`;
             menu += `🌐 devmatrixs.lat — El control.`;
 
-            // ── MENSAJE 1: Imagen de cabecera + menú como caption ────────────
-            // Usa imageMessage nativo — compatible con TODAS las versiones de WhatsApp
+            // ── Envío: imagen de ImgBB + caption + buttons nativos ────────────
             await sock.sendMessage(jid, {
-                image:    { url: 'https://i.ibb.co/gLVNPHj8/922335a4-dc29-4e06-bd92-5d34bc9548de.jpg' },
+                image: { url: 'https://i.ibb.co/gLVNPHj8/922335a4-dc29-4e06-bd92-5d34bc9548de.jpg' },
                 caption:  menu,
-                mimetype: 'image/jpeg'
-            });
-
-            // ── MENSAJE 2: ListMessage como menú de acciones rápidas ──────────
-            // ListMessage sí funciona en cuentas personales (no requiere Business API)
-            const listMsg = proto.Message.ListMessage.create({
-                title:       '🤖 Acciones rápidas',
-                description: '¿Qué quieres hacer?',
-                footerText:  '🌐 devmatrixs.lat',
-                buttonText:  '📥 Ver opciones',
-                listType:    1,
-                sections: [
+                footer:   `🌐 devmatrixs.lat — El control.`,
+                mimetype: 'image/jpeg',
+                buttons: [
                     {
-                        title: 'Acciones',
-                        rows: [
-                            {
-                                rowId:       'minar',
-                                title:       '⛏️ Minar',
-                                description: 'Obtener recursos del bot'
-                            },
-                            {
-                                rowId:       'creador',
-                                title:       '👑 Ver Creador',
-                                description: 'Info del desarrollador'
-                            }
-                        ]
+                        buttonId:   `${usedPrefix}minar`,
+                        buttonText: { displayText: '⛏️ Minar' },
+                        type: 1
                     },
                     {
-                        title: 'Sitio web',
-                        rows: [
-                            {
-                                rowId:       'web_devmatrix',
-                                title:       '🌐 devmatrixs.lat',
-                                description: 'Visita el sitio oficial'
-                            }
-                        ]
+                        buttonId:   `${usedPrefix}creador`,
+                        buttonText: { displayText: '👑 Ver Creador' },
+                        type: 1
+                    },
+                    {
+                        buttonId:   `${usedPrefix}web`,
+                        buttonText: { displayText: '🌐 Sitio Web' },
+                        type: 1
                     }
-                ]
+                ],
+                headerType: 4  // DOCUMENT_WITH_CAPTION → imagen con botones
             });
 
-            const listWaMsg = await generateWAMessageFromContent(
-                jid,
-                { listMessage: listMsg },
-                {}
-            );
-            await sock.relayMessage(jid, listWaMsg.message, { messageId: listWaMsg.key.id });
-
-            console.log('✅ [menu] Menú enviado (imagen + lista) a:', jid);
+            console.log('✅ [menu] Menú enviado correctamente a:', jid);
 
         } catch (err) {
             console.error('❌ ERROR EN MENÚ:', err);
