@@ -88,9 +88,9 @@ module.exports = {
             });
 
             // ── Texto del menú ─────────────────────────────────────────────
-            let menu = `╔════════════════════════╗\n`;
+            let menu = `╔════════════════════╗\n`;
             menu += `  🤖 𝗠𝗔𝗧𝗥𝗜𝗫 𝗕𝗢𝗧 — v${version}\n`;
-            menu += `╚════════════════════════╝\n`;
+            menu += `╚════════════════════╝\n`;
             menu += `\n📌 ¡${ucapan}, ${pushName}! \n`;
 
             menu += `\n┌── 📊 𝗘𝗦𝗧𝗔𝗗𝗜́𝗦𝗧𝗜𝗖𝗔𝗦 ──┐\n`;
@@ -101,7 +101,7 @@ module.exports = {
             menu += `│ \`\`\`Nivel    : ${nivel}\`\`\`\n`;
             menu += `│ \`\`\`EXP      : ${xpActual} / ${xpSiguiente}\`\`\`\n`;
             menu += `│ \`\`\`Diamantes: ${diamantes}\`\`\`\n`;
-            menu += `└───────────────────────┘\n`;
+            menu += `└───────────────────┘\n`;
 
             menu += `\n┌── 📁 𝗠𝗘𝗡𝗨́ 𝗖𝗢𝗠𝗔𝗡𝗗𝗢𝗦 ──┐\n`;
             for (const [cat, cmdsArr] of Object.entries(categories)) {
@@ -114,7 +114,7 @@ module.exports = {
                 });
             }
             menu += `│\n`;
-            menu += `└───────────────────────┘\n`;
+            menu += `└────────────────────┘\n`;
             menu += `🌐 devmatrixs.lat — El control.`;
 
             // ── templateButtons: estructura que genera ↩️ y ↗️ en WhatsApp ────────
