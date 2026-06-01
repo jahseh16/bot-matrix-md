@@ -88,9 +88,9 @@ module.exports = {
             });
 
             // ── Texto del menú ─────────────────────────────────────────────
-            let menu = `╔════════════════════╗\n`;
+            let menu = `╔════════════════════════╗\n`;
             menu += `  🤖 𝗠𝗔𝗧𝗥𝗜𝗫 𝗕𝗢𝗧 — v${version}\n`;
-            menu += `╚════════════════════╝\n`;
+            menu += `╚════════════════════════╝\n`;
             menu += `\n📌 ¡${ucapan}, ${pushName}! \n`;
 
             menu += `\n┌── 📊 𝗘𝗦𝗧𝗔𝗗𝗜́𝗦𝗧𝗜𝗖𝗔𝗦 ──┐\n`;
@@ -114,35 +114,40 @@ module.exports = {
                 });
             }
             menu += `│\n`;
-            menu += `└────────────────────┘\n`;
+            menu += `└───────────────────────┘\n`;
+            menu += `🌐 devmatrixs.lat — El control.`;
 
-            // ── Envío con botones mixtos ───────────────────────────────────
-            // type:1 = quick_reply (flechita ↩️)
-            // type:5 = urlButton   (cuadrito ↗️, abre Chrome directamente)
+            // ── templateButtons: estructura que genera ↩️ y ↗️ en WhatsApp ────────
+            // quickReplyButton -> ↩️ (envía el id como texto al chat)
+            // urlButton        -> ↗️ (abre Chrome al tocarlo)
             await sock.sendMessage(jid, {
                 image:    { url: 'https://i.ibb.co/gLVNPHj8/922335a4-dc29-4e06-bd92-5d34bc9548de.jpg' },
                 caption:  menu,
-                footer:   `⚙️ devmatrixs.lat — El control.`,
+                footer:   `🌐 devmatrixs.lat — El control.`,
                 mimetype: 'image/jpeg',
-                buttons: [
+                templateButtons: [
                     {
-                        buttonId:   `${usedPrefix}minar`,
-                        buttonText: { displayText: '⛏️ Minar' },
-                        type: 1
+                        index: 1,
+                        quickReplyButton: {
+                            displayText: '⛏️ Minar',
+                            id: `${usedPrefix}minar`
+                        }
                     },
                     {
-                        buttonId:   `${usedPrefix}creador`,
-                        buttonText: { displayText: '👑 Ver Creador' },
-                        type: 1
+                        index: 2,
+                        quickReplyButton: {
+                            displayText: '👑 Ver Creador',
+                            id: `${usedPrefix}creador`
+                        }
                     },
                     {
-                        buttonId:   'url_devmatrix',
-                        buttonText: { displayText: '🌐 Sitio Web' },
-                        type: 5,
-                        url: 'https://devmatrixs.lat'
+                        index: 3,
+                        urlButton: {
+                            displayText: '🌐 Sitio Web',
+                            url: 'https://devmatrixs.lat'
+                        }
                     }
-                ],
-                headerType: 4
+                ]
             });
 
             console.log('✅ [menu] Menú enviado correctamente a:', jid);
