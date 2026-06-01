@@ -28,18 +28,18 @@ function resolveJid(jid, msg) {
     return jid;
 }
 
-// Emoji por categoria para el menu dinamico
+// Emoji por categoria
 const catEmoji = {
-    'ia':          '🧠',
-    'system':      '⚡',
-    'buscador':    '🔍',
-    'downloader':  '📥',
-    'general':     '⚙️',
-    'juegos':      '🎮',
-    'economia':    '💰',
-    'moderacion':  '🛡️',
-    'grupo':       '👥',
-    'multimedia':  '🎥',
+    'ia':         '🧠',
+    'system':     '⚡',
+    'buscador':   '🔍',
+    'downloader': '📥',
+    'general':    '⚙️',
+    'juegos':     '🎮',
+    'economia':   '💰',
+    'moderacion': '🛡️',
+    'grupo':      '👥',
+    'multimedia': '🎥',
 };
 
 module.exports = {
@@ -77,26 +77,25 @@ module.exports = {
             const diamantes   = userStats.diamantes || 0;
             const xpSiguiente = nivel * 150;
 
-            // ── Agrupar comandos dinámicamente desde global.comandos ──────────
+            // ── Agrupar comandos dinámicamente desde global.comandos ──────
             const cmds = [...global.comandos.values()];
             const categories = {};
             cmds.forEach((cmd) => {
                 if (!cmd.command) return;
                 const cat = (cmd.category || 'general').toLowerCase();
                 if (!categories[cat]) categories[cat] = [];
-                // evitar duplicados
                 if (!categories[cat].some((c) => c.command[0] === cmd.command[0])) {
                     categories[cat].push(cmd);
                 }
             });
 
-            // ── Cabecera fija ────────────────────────────────────────────────
+            // ── Construir texto del menú ────────────────────────────
             let menu = `╔════════════════════════╗\n`;
             menu += `  🤖 𝗔𝗔𝗧𝗥𝗜𝗫 𝗕𝗢𝗧 — v${version}\n`;
             menu += `╚════════════════════════╝\n`;
             menu += `\n📌 ¡${ucapan}, ${pushName}! \n`;
 
-            // ── Bloque de estadísticas con backticks ────────────────────────
+            // Bloque de estadísticas (backticks renderizados por WhatsApp como monospace)
             menu += `\n┌── 📊 𝗘𝗦𝗧𝗔𝗗𝗜́𝗦𝗧𝗜𝗖𝗔𝗦 ──┐\n`;
             menu += `│ \`\`\`Creador: JAHSEH\`\`\`\n`;
             menu += `│ \`\`\`Motor  : wileys\`\`\`\n`;
@@ -107,110 +106,74 @@ module.exports = {
             menu += `│ \`\`\`Diamantes: ${diamantes}\`\`\`\n`;
             menu += `└───────────────────────┘\n`;
 
-            // ── Sección de comandos dinámicos ────────────────────────────────
+            // Bloque de comandos dinámicos
             menu += `\n┌── 📁 𝗔𝗘𝗡𝗞́ 𝗖𝗢𝗔𝗔𝗕𝗢𝗦 ──┐\n`;
-
             for (const [cat, cmdsArr] of Object.entries(categories)) {
-                const catName = cat.charAt(0).toUpperCase() + cat.slice(1);
-                const emoji = catEmoji[cat] || '📂';
+                const catName = cat.toUpperCase();
+                const emoji   = catEmoji[cat] || '📂';
                 menu += `│\n`;
-                menu += `> ${emoji} *[ ${catName.toUpperCase()} ]*\n`;
+                menu += `> ${emoji} *[ ${catName} ]*\n`;
                 cmdsArr.forEach((cmd) => {
-                    // mostrar solo el primer alias del comando
-                    const nombre = cmd.command[0];
-                    // si el comando tiene descripción corta la incluimos
-                    const desc = cmd.description ? `: ${cmd.description}` : '';
-                    menu += `> _${nombre}_${desc}\n`;
+                    menu += `> _${cmd.command[0]}_\n`;
                 });
             }
-
             menu += `│\n`;
             menu += `└───────────────────────┘\n`;
             menu += `🌐 devmatrixs.lat — El control.`;
 
-            // ── Tarjeta de contacto verificado ───────────────────────────────
-            const fkontak = {
-                key: { fromMe: false, participant: '0@s.whatsapp.net' },
-                message: {
-                    contactMessage: {
-                        displayName: `✅ ${settings.botName}`,
-                        vcard: [
-                            'BEGIN:VCARD',
-                            'VERSION:3.0',
-                            `N:;${settings.botName};;;`,
-                            `FN:${settings.botName}`,
-                            `item1.TEL;waid=${settings.ownerNumbers[0]}:+${settings.ownerNumbers[0]}`,
-                            'item1.X-ABLabel:Teléfono',
-                            'END:VCARD'
-                        ].join('\n')
-                    }
-                }
-            };
-
-            // ── Construir interactiveMessage ─────────────────────────────────
-            const interactive = proto.Message.InteractiveMessage.create({
-                body:   { text: menu },
-                footer: { text: `🌐 devmatrixs.lat — El control.` },
-                header: {
-                    title:              `🤖 ${settings.botName}`,
-                    subtitle:           `${ucapan}, ${pushName}`,
-                    hasMediaAttachment: true,
-                    imageMessage: proto.Message.ImageMessage.create({
-                        url:           'https://i.ibb.co/gLVNPHj8/922335a4-dc29-4e06-bd92-5d34bc9548de.jpg',
-                        mimetype:      'image/jpeg',
-                        caption:       '',
-                        jpegThumbnail: Buffer.alloc(0)
-                    })
-                },
-                nativeFlowMessage: {
-                    buttons: [
-                        {
-                            name: 'quick_reply',
-                            buttonParamsJson: JSON.stringify({
-                                display_text: '⛏️ Minar',
-                                id: `${settings.prefix}minar`
-                            })
-                        },
-                        {
-                            name: 'quick_reply',
-                            buttonParamsJson: JSON.stringify({
-                                display_text: '👑 Ver Creador',
-                                id: `${settings.prefix}creador`
-                            })
-                        },
-                        {
-                            name: 'cta_url',
-                            buttonParamsJson: JSON.stringify({
-                                display_text: '🌐 Sitio Web',
-                                url: 'https://devmatrixs.lat',
-                                merchant_url: 'https://devmatrixs.lat'
-                            })
-                        }
-                    ]
-                }
+            // ── MENSAJE 1: Imagen de cabecera + menú como caption ────────────
+            // Usa imageMessage nativo — compatible con TODAS las versiones de WhatsApp
+            await sock.sendMessage(jid, {
+                image:    { url: 'https://i.ibb.co/gLVNPHj8/922335a4-dc29-4e06-bd92-5d34bc9548de.jpg' },
+                caption:  menu,
+                mimetype: 'image/jpeg'
             });
 
-            console.log('📌 [menu] Generando waMsg...');
-
-            const waMsg = await generateWAMessageFromContent(
-                jid,
-                {
-                    viewOnceMessage: {
-                        message: {
-                            messageContextInfo: {
-                                deviceListMetadata:        {},
-                                deviceListMetadataVersion: 2
+            // ── MENSAJE 2: ListMessage como menú de acciones rápidas ──────────
+            // ListMessage sí funciona en cuentas personales (no requiere Business API)
+            const listMsg = proto.Message.ListMessage.create({
+                title:       '🤖 Acciones rápidas',
+                description: '¿Qué quieres hacer?',
+                footerText:  '🌐 devmatrixs.lat',
+                buttonText:  '📥 Ver opciones',
+                listType:    1,
+                sections: [
+                    {
+                        title: 'Acciones',
+                        rows: [
+                            {
+                                rowId:       'minar',
+                                title:       '⛏️ Minar',
+                                description: 'Obtener recursos del bot'
                             },
-                            interactiveMessage: interactive
-                        }
+                            {
+                                rowId:       'creador',
+                                title:       '👑 Ver Creador',
+                                description: 'Info del desarrollador'
+                            }
+                        ]
+                    },
+                    {
+                        title: 'Sitio web',
+                        rows: [
+                            {
+                                rowId:       'web_devmatrix',
+                                title:       '🌐 devmatrixs.lat',
+                                description: 'Visita el sitio oficial'
+                            }
+                        ]
                     }
-                },
-                { userJid: sock.user.id, quoted: fkontak }
-            );
+                ]
+            });
 
-            console.log('📌 [menu] Enviando relayMessage...');
-            await sock.relayMessage(jid, waMsg.message, { messageId: waMsg.key.id });
-            console.log('✅ [menu] Menú enviado correctamente a:', jid);
+            const listWaMsg = await generateWAMessageFromContent(
+                jid,
+                { listMessage: listMsg },
+                {}
+            );
+            await sock.relayMessage(jid, listWaMsg.message, { messageId: listWaMsg.key.id });
+
+            console.log('✅ [menu] Menú enviado (imagen + lista) a:', jid);
 
         } catch (err) {
             console.error('❌ ERROR EN MENÚ:', err);
