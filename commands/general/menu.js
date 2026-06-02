@@ -118,35 +118,31 @@ module.exports = {
             menu += `🌐 devmatrixs.lat — El control.`;
 
             // ── templateButtons: 100% texto para evitar bloqueos de Meta ────────
+          // ── ENVÍO CORRECTO: Estructura corregida para Baileys ────────
             await sock.sendMessage(jid, {
-                image:    { url: 'https://i.ibb.co/gLVNPHj8/922335a4-dc29-4e06-bd92-5d34bc9548de.jpg' },
-                caption:  menu,
-                footer:   `🌐 devmatrixs.lat — El control.`,
+                image: { url: 'https://i.ibb.co/gLVNPHj8/922335a4-dc29-4e06-bd92-5d34bc9548de.jpg' },
+                caption: menu,
+                footer: `⚙️ devmatrixs.lat — El control.`,
                 mimetype: 'image/jpeg',
-                templateButtons: [
+                buttons: [
                     {
-                        index: 1,
-                        quickReplyButton: {
-                            displayText: '⛏️ Minar',
-                            id: `${usedPrefix}minar`
-                        }
+                        buttonId: `${usedPrefix}minar`,
+                        buttonText: { displayText: '⛏️ Minar' },
+                        type: 1
                     },
                     {
-                        index: 2,
-                        quickReplyButton: {
-                            displayText: '👑 Ver Creador',
-                            id: `${usedPrefix}creador`
-                        }
+                        buttonId: `${usedPrefix}creador`,
+                        buttonText: { displayText: '👑 Ver Creador' },
+                        type: 1
                     },
                     {
-                        index: 3,
-                        quickReplyButton: {
-                            displayText: '🌐 Sitio Web',
-                            id: `${usedPrefix}web`
-                        }
+                        buttonId: `${usedPrefix}web`,
+                        buttonText: { displayText: '🌐 Sitio Web' },
+                        type: 1
                     }
-                ]
-            });
+                ],
+                headerType: 4
+            }, { quoted: msg });
 
             console.log('✅ [menu] Menú enviado correctamente a:', jid);
 
