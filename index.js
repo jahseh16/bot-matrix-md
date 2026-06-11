@@ -43,12 +43,84 @@ const start = async () => {
     console.log(`🤖 ${settings.botName} está en línea.`);
 };
 
+// ─── Helper: extrae el buttonId de cualquier tipo de respuesta a botón ────────
+function extractButtonId(msg) {
+    const m = msg.message;
+    if (!m) return null;
+
+    // templateButtonReplyMessage  (templateButtons con quickReplyButton)
+    if (m.templateButtonReplyMessage) {
+        return m.templateButtonReplyMessage.selectedId ||
+               m.templateButtonReplyMessage.selectedDisplayText ||
+               null;
+    }
+
+    // buttonsResponseMessage  (buttons clásicos)
+    if (m.buttonsResponseMessage) {
+        return m.buttonsResponseMessage.selectedButtonId ||
+               m.buttonsResponseMessage.selectedDisplayText ||
+               null;
+    }
+
+    // interactiveResponseMessage + nativeFlowResponseMessage
+    if (m.interactiveResponseMessage) {
+        const raw = m.interactiveResponseMessage
+                      ?.nativeFlowResponseMessage?.paramsJson;
+        if (raw) {
+            try {
+                const p = JSON.parse(raw);
+                return p.id || p.selectedId || null;
+            } catch { /* nada */ }
+        }
+        return m.interactiveResponseMessage.selectedId || null;
+    }
+
+    // listResponseMessage
+    if (m.listResponseMessage) {
+        return m.listResponseMessage?.singleSelectReply?.selectedRowId ||
+               m.listResponseMessage?.singleSelectReply?.id ||
+               null;
+    }
+
+    return null;
+}
+
 // Manejador de mensajes
 const handleMessage = async (sock, msg, from, isGroup, sender) => {
     try {
-        const body = (msg.message.conversation || msg.message.extendedTextMessage?.text || msg.message.imageMessage?.caption || "");
-        const args = body.trim().split(/ +/).slice(1);
-        const command = body.startsWith(settings.prefix) ? body.slice(settings.prefix.length).trim().split(/ +/)[0].toLowerCase() : null;
+        const body = (
+            msg.message.conversation ||
+            msg.message.extendedTextMessage?.text ||
+            msg.message.imageMessage?.caption ||
+            ""
+        );
+
+        // ── Handler de respuestas a botones ──────────────────────────────────
+        const btnId = extractButtonId(msg);
+        if (btnId) {
+            const prefix  = settings.prefix || '.';
+            // El id del botón trae el prefijo (.igmp3, .ighd, etc.)
+            // Lo normalizamos igual que un comando de texto
+            const cleanId = btnId.startsWith(prefix)
+                ? btnId.slice(prefix.length).trim().toLowerCase()
+                : btnId.trim().toLowerCase();
+
+            const btnArgs = cleanId.split(/ +/);
+            const btnCmd  = btnArgs.shift();
+            const cmdMod  = global.comandos.get(btnCmd);
+
+            if (cmdMod?.handle) {
+                await cmdMod.handle(sock, from, msg, btnCmd, btnArgs, sender);
+                return;
+            }
+            // Si no hay módulo registrado para ese id, cae al flujo normal
+        }
+        // ─────────────────────────────────────────────────────────────────────
+
+        const args    = body.trim().split(/ +/).slice(1);
+        const command = body.startsWith(settings.prefix)
+            ? body.slice(settings.prefix.length).trim().split(/ +/)[0].toLowerCase()
+            : null;
 
         // Moderación: Anti-Link
         if (isGroup && settings.features.antiLink && isLink(body) && !msg.key.fromMe) {
